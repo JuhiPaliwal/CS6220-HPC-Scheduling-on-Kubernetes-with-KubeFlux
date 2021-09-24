@@ -43,9 +43,11 @@ Fluxion combines graph-based resource modeling with efficient temporal plan mana
 
 ## 5. Acceptance criteria
 
-There are two main tasks to be fulfilled:
-1. Implementing a controller for job cancellation management (for pods allocated by KubeFlux)
-2. Proposing methodologies to dynamically update Flux internal graph of resources to address resource sharing between Kubernetes and Flux (for pods allocated by other schedulers). Note, this is a stretch goal.
+- Minimum acceptance criteria:
+    - Implementing a controller for job cancellation management (for pods allocated by KubeFlux)
+
+- Stretch goal:
+    - Proposing methodologies to dynamically update Flux internal graph of resources to address resource sharing between Kubernetes and Flux (for pods allocated by other schedulers). Note, this is a stretch goal.
 
 
 ## 6.  Release Planning:
