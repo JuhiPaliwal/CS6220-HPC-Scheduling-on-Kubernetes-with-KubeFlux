@@ -44,10 +44,14 @@ Fluxion combines graph-based resource modeling with efficient temporal plan mana
 ## 5. Acceptance criteria
 
 - Minimum acceptance criteria:
-    - Implementing a controller for job cancellation management (for pods allocated by KubeFlux)
+    - Implementing a controller for job cancellation management (for pods allocated by KubeFlux).
+    - The informer component of the controller shall inform KubeFlux of state changes for its allocated pods in the cluster.
+    - KubeFlux shall have an updated view of the state of its allocated pods either when said state is changed or when KubeFlux needs to make a scheduling decision.
+    - 
 
 - Stretch goal:
     - Proposing methodologies to dynamically update Flux internal graph of resources to address resource sharing between Kubernetes and Flux (for pods allocated by other schedulers). Note, this is a stretch goal.
+    - The system shall provide an interface for adding resource sharing polices.
 
 
 ## 6.  Release Planning:
