@@ -75,7 +75,7 @@ Fluxion combines graph-based resource modeling with efficient temporal plan mana
 
 • Release 3
     o Codewalk by our mentors
-        - Discus possible solutions for handling state inconsistency problem
+        - Discus possible solutions for handling state inconsistency problem.
     o Develop the informer
         - Log file for each POD.
         - Handle more PodPhases in updatePOD Function.
@@ -86,13 +86,13 @@ Fluxion combines graph-based resource modeling with efficient temporal plan mana
 
 • Release 4
     o Create an operator through operator-sdk
-        - Create CR based on POD information
-        - Delete CR after POD completion
-        - Fetch POD and read status in reconciliation loop
-        - Add experimental code in reconciliation loop
-    o Define CustomResourceDefinition (CRD)
-    o Test CRD with YAML file manually
+        - Create CR based on POD information.
+        - Delete CR after POD completion.
+        - Fetch POD and read status in reconciliation loop.
+        - Add experimental code in reconciliation loop.
+    o Define CustomResourceDefinition (CRD).
+    o Test CRD with YAML file manually.
 
 • Release 5
-    o Demo informer in an open shift cluster (real world environment)
-    o Performance analysis of the Pod Informer
+    o Demo informer in an open shift cluster (real world environment).
+    o Performance analysis of the Pod Informer.
