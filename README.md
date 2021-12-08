@@ -55,8 +55,44 @@ Fluxion combines graph-based resource modeling with efficient temporal plan mana
 
 ## 6.  Release Planning:
 
-- Installing and Running the current KubeFlux Plugin.
-- Implementation of a controller with an informer on pod updates.
-- Implementation of the entry points in KubeFlux to allow job updates and resource graph updates.
-- Testing on OpenShift with GROMACS benchmark.
-- Proposing a method to update Flux resource graph with the resources shared  between kubernetes. (stretch goal)
+- Release 1
+    - Learn about Kubernetes and Fluxion
+        - Read about Kubernetes architecture.
+        - Focus on the functionalities of Default Scheduler in Kubernetes.
+        - Understand the graph-based implementation of Flux Scheduler.
+    - Building the Environment
+        - Install Kubernetes for different OS.
+        - Install dependencies like Helm Chart, Minikube etc.
+
+- Release 2
+    - Analysis of the underlying resource graph used by Flux to represent the Kubernetes cluster
+        - Getting familiar with Golang.
+        - Read Resource-query documentation.
+    - Designed Pi program test and reproduced the state inconsistency issue in practice
+        - Setting up Kind and Local Registry.
+        - Run PI program with Default Scheduler.
+        - Run PI program with KubeFlux Scheduler.
+
+- Release 3
+    - Codewalk by our mentors
+        - Discus possible solutions for handling state inconsistency problem.
+    - Develop the informer
+        - Log file for each POD.
+        - Handle more PodPhases in updatePOD Function.
+        - Add PodInformer (for successful PODs).
+        - Save a set of Job IDs in scheduler object.
+        - Add NodInformer.
+        - Create corner test cases.
+
+- Release 4
+    - Create an operator through operator-sdk
+        - Create CR based on POD information.
+        - Delete CR after POD completion.
+        - Fetch POD and read status in reconciliation loop.
+        - Add experimental code in reconciliation loop.
+    - Define CustomResourceDefinition (CRD).
+    - Test CRD with YAML file manually.
+
+- Release 5
+    - Demo informer in an open shift cluster (real world environment).
+    - Performance analysis of the Pod Informer.
