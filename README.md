@@ -96,7 +96,7 @@ Below is the illustration of the same (Diagram 4.2a). The demonstration has a cl
 
 This demonstrates the co-scheduling issue and emphasises the need for KubeFlux to be aware of the cluster resources that are available at all time. Any changes to the cluster by Kubernetes scheduler or any other third party scheduler should be reflected to KubeFlux’s internal resource graph that takes the scheduling decisions.
 
-![](StateSynchornizationProblem.png)
+![](StateSynchronizationExample.png)
 
 Co-scheduling Inconsistency
 
@@ -237,5 +237,161 @@ While our solution covers the main conceptual challenges we cited earlier, there
 
     Here flux-k8s is used as a git submodule in scheduler-plugins
 
+1. Start a local kind cluster with local docker registry
 
+```bash
+cd $SCHEDULER_PLUGINS/flux-k8s/example/pi
+./init_kind_cluster.sh   
+```
+
+2. Make docker image for KubeFlux and push to local registry
+
+```bash
+cd $SCHEDULER_PLUGINS
+make local-image
+docker push localhost:5000/scheduler-plugins/kube-scheduler
+```
+
+3. Install KubeFlux
+
+```bash
+cd $SCHEDULER_PLUGINS/manifests/kubeflux/charts/
+helm install scheduler-plugins ./as-a-second-scheduler/ 
+```
+
+4. Make docker image for Pi calculation program and push to local registry
+
+```bash
+cd $SCHEDULER_PLUGINS/flux-k8s/example/pi
+make build-image && make push-image-local
+make build-segfault-image && make push-segfault-image-local
+```
+
+5. Run Pi calculation program
+
+```bash
+kubectl create -f ./pi-job-default.yaml
+kubectl create -f ./pi-job-kubeflux.yaml
+Kubectl get pods
+```
+
+6. Get KubeFlux logs
+
+```bash
+kubectl logs -n scheduler-plugins $(kubectl get pod -l component=scheduler -n scheduler-plugins -o jsonpath="{.items[0].metadata.name}")
+```
+
+7. Undeploy KubeFlux
+
+```bash
+helm uninstall scheduler-plugins 
+```
+
+### 10.4 JGFOperator
+This part is about deploying a Kubernetes Operator to a local cluster. It requires following repositories and branches.
+- [flux-k8s](https://github.com/xyloid/flux-k8s) branch: `develop`
+- [scheduler-plugins](https://github.com/xyloid/scheduler-plugins) branch: `dev-kubeflux` 
+- [JGFOperator](https://github.com/xyloid/JGFOperator) branch: `main`
+
+1. Setup a local cluster and install KubeFlux as described in 9.3 step 1 to 3.
+2. Build docker image for JGFOperator and push to local registry
+```bash
+cd $JGFOperator
+make docker-build
+make docker-push-local 
+```
+
+3. Deploy JGFOperator
+```bash
+make deploy-local
+```
+
+4. Verify deployment 
+```bash
+kubectl get crd
+kubectl get podinfoes
+```
+
+5. Check log of the operator
+
+```bash
+kubectl logs -n jgfoperator-system $(kubectl get pods -n jgfoperator-system -o jsonpath="{.items[0].metadata.name}") manager
+```
+
+6. Undeploy
+
+```bash
+make undeploy
+```
+
+### 10.5 Time Measurement
+
+This part is about measuring time consumption of several key operations in KubeFlux. A remote cluster (an OpenShift cluster on IBM Cloud) is used in the process. It requires following repositories and branches.
+- [flux-k8s](https://github.com/xyloid/flux-k8s) branch: `dev_operator`
+- [scheduler-plugins](https://github.com/xyloid/scheduler-plugins) branch: `dev-kubeflux-measurement`
+- [flex-sched](https://github.com/xyloid/flux-sched) branch: `measurement-dev`
+
+1. Setup a remote cluster for kubectl
+
+    The default kubeconfig file is “~/.kube/config”. We can modify the content of this file to make kubectl connect to a remote cluster.
+
+2. Build docker image for KubeFlux and push to Dockerhub
+
+```bash
+cd $SCHEDULER_PLUGINS
+make dockerhub-image
+```
+
+3. Install KubeFlux to the remote cluster
+
+```bash
+cd $SCHEDULER_PLUGINS/manifests/kubeflux/charts/
+helm install scheduler-plugins ./as-a-second-scheduler/ 
+```
+
+4. Deploy test program
+
+```bash
+cd $SCHEDULER_PLUGINS/manifests/kubeflux/measuremnt/
+Kubectl create -f ./pi-job-kubeflux.yaml
+```
+
+5. Get KubeFlux logs
+
+```bash
+kubectl logs -n scheduler-plugins $(kubectl get pod -l component=scheduler -n scheduler-plugins -o jsonpath="{.items[0].metadata.name}")
+```
+
+#### Experiment Results
+
+We performed the above experiment 7 times on a remote cluster with 8 worker nodes. Each worker node has 4 CPU cores and 16 Gb memory. In each job, 16 pods are deployed. Each pos has a cpu limit of 1 and a cpu request of 1. Then we read the time measurements from the log file. The results are listed in the table below. Note that in the first experiment, the Collect Cluster Information step took much more time than rest experiments. The possible reason is that when that information is being collected, it involves etcd, API server and some other Kubernetes components. There could be some caching mechanism behind this behavior.  
+
+![](Measurements.png)
+
+## 11. Future Scope
+
+Our project can be extended towards making KubeFlux a competent HPC scheduling solution for Kubernetes:
+- Designing a standard process for synchronizing a plug-in scheduler’s internal state with the Kubernetes cluster state
+    - Getting a proper figure of resource utilization from running pods (translating Kubernetes cpu measurements to tangible info)
+    - Designing interface with a generic representation of the kubernetes cluster state that plug-in schedulers can access.
+
+We start with unravelling the technical challenges we faced while resolving the state synchronisation problem among schedulers. We listed those challenges below for future reference.
+
+1. Kubernetes has 3 different ways of specifying pod resource needs.
+    - Priority 1: Guaranteed Pod - complete resource usage specification
+        - Example : cpuLimit(maximum resources needed) and cpuRequest (minimal resources needed) need to be equal
+    - Priority 2: Burstable Pod - incomplete resource usage specification 
+        - Example: cpuRequest and cpuLimit need not be equal.
+    - Priority 3: Best-Effort Pod - no resource usage specification
+
+2. Resources usage fluctuations
+    - Actual resource usage could be different from what in the specification file
+    - Only kubelet knows the exact resource usage figure of a node.
+
+3. Imperative HPC management philosophy doesn’t align with the declarative Kubernetes management philosophy
+    - Kubernetes goal when supplied with a job specification is to converge towards a desired state mentioned in said specification. It does not guarantee that the actual state is always equal to the desired state.
+    - Can not implement state synchronisation on cpu level.
+    - K8s has sophisticated node sharing mechanisms 
+
+4. Potential latency introduced by the operator when performing high-throughput jobs.
 
