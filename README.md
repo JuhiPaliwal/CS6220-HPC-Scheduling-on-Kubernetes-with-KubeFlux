@@ -32,7 +32,7 @@ Kubernetes typically deploy long-running services, like web servers and it is hi
 
 There are several aspects to be addressed when using third-party software to take scheduling decisions in a Kubernetes cluster. For this project, we focus on two aspects when we integrate a plugin scheduler like Flux:
 
-### 3.1 Introduction to Kube-Flux
+### 3.1 Introduction to KubeFlux
 
 Kubernetes was originally for scheduling and deploying microservices, however, the platform has garnered popularity and its lack of accommodation for different types of workloads became apparent. 
 
@@ -154,7 +154,7 @@ While our solution covers the main conceptual challenges we cited earlier, there
     - Implement a controller for job cancellation management (for pods allocated by KubeFlux).
     - The informer component of the controller shall inform KubeFlux of state changes for its allocated pods in the cluster.
     - KubeFlux shall have an updated view of the state of its allocated pods either when said state is changed or when KubeFlux needs to make a scheduling decision.
-    - Test the scheduler: The scheduler will schedule a Pi calculation program, which serves as a hello world program for scientific computing. It should be able to reuse cpu resources in order to complete a batch of pods that runs a Pi calculation program. Also, the scheduler should be able to free the resources occupied by failed pods. 
+    - Test the scheduler: The scheduler will schedule a Pi calculation program, which serves as a hello world program for scientific computing. It should be able to reuse cpu resources in order to complete a batch of pods that runs a Pi calculation program. Also, the scheduler should be able to free the resources occupied by failed pods.
 - Stretch goal:
     - Propose methodologies to dynamically update Fluxion's internal graph of resources to address resource sharing between Kubernetes and Fluxion (for pods allocated by other schedulers).
     - The system shall provide an interface for adding resource sharing policies.
