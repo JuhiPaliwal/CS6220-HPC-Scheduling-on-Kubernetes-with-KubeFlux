@@ -151,10 +151,11 @@ While our solution covers the main conceptual challenges we cited earlier, there
 ## 7. Acceptance criteria
 
 - Minimum acceptance criteria:
-    - Implement a controller for job cancellation management (for pods allocated by KubeFlux).
+    - Implement a controller for job cancellation management (for pods allocated by KubeFlux). [link to the merged PR](https://github.com/flux-framework/flux-k8s/pull/22)
     - The informer component of the controller shall inform KubeFlux of state changes for its allocated pods in the cluster.
     - KubeFlux shall have an updated view of the state of its allocated pods either when said state is changed or when KubeFlux needs to make a scheduling decision.
-    - Test the scheduler: The scheduler will schedule a Pi calculation program, which serves as a hello world program for scientific computing. It should be able to reuse cpu resources in order to complete a batch of pods that runs a Pi calculation program. Also, the scheduler should be able to free the resources occupied by failed pods. 
+    - Test the scheduler: The scheduler will schedule a Pi calculation program, which serves as a hello world program for scientific computing. It should be able to reuse cpu resources in order to complete a batch of pods that runs a Pi calculation program. Also, the scheduler should be able to free the resources occupied by failed pods. [link to the merged PR](https://github.com/flux-framework/flux-k8s/pull/23)
+
 - Stretch goal:
     - Propose methodologies to dynamically update Fluxion's internal graph of resources to address resource sharing between Kubernetes and Fluxion (for pods allocated by other schedulers).
     - The system shall provide an interface for adding resource sharing policies.
