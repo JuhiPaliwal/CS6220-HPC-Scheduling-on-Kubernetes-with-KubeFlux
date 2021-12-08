@@ -77,7 +77,7 @@ Below is the illustration of the same. The demonstration has a cluster with 1 wo
 
 This state inconsistency leads to infinite wait time for any pods scheduled by KubeFlux.
 
-![StateInconsistency](StateInconsistencyProblem.png)
+![StateInconsistency](StateInconsistencyExample.png)
 
 State Inconsistency
 
@@ -106,7 +106,7 @@ Co-scheduling Inconsistency
 ### 5.1 Pod Informer
 
 
-![](StateInconsistencySolution.png)
+![](InformerAndKubeflux.png)
 
 
 Our first contribution to Kube-Flux is the Pod Informer, a simple and efficient solution to the problem of Kube-Flux not being aware of the status of its own pods built using the Kubernetes Controller pattern which is what kubernetes uses to make sure the state of the cluster matches the desired state. We use the tools provided by controller differently however; every time Kube-Flux schedules a new pod, the pod is added to a watch list structured using 3 event watchers/handlers:
@@ -234,6 +234,8 @@ While our solution covers the main conceptual challenges we cited earlier, there
     This part is about deploying KubeFlux in a local cluster and running a Pi calculation program.  It requires following repositories and branches.
 - [flux-k8s](https://github.com/xyloid/flux-k8s) branch: `develop`
 - [scheduler-plugins](https://github.com/xyloid/scheduler-plugins) branch: `dev-kubeflux`
- 
+
     Here flux-k8s is used as a git submodule in scheduler-plugins
+
+
 
