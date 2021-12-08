@@ -32,23 +32,23 @@ Kubernetes typically deploy long-running services, like web servers and it is hi
 
 There are several aspects to be addressed when using third-party software to take scheduling decisions in a Kubernetes cluster. For this project, we focus on two aspects when we integrate a plugin scheduler like Flux:
 
-### 3.1 Introduction to Kube-Flux
+### 3.1 Introduction to KubeFlux
 
 Kubernetes was originally for scheduling and deploying microservices, however, the platform has garnered popularity and its lack of accommodation for different types of workloads became apparent. 
 
-Kube-Flux is plug-in scheduler primarily focused on enabling high performance computing on Kubernetes. Kube-Flux in its current state works as a bridge between Kubernetes and Fluxion, a powerful graph library that can take scheduling decisions for HPC applications.
+KubeFlux is plug-in scheduler primarily focused on enabling high performance computing on Kubernetes. KubeFlux in its current state works as a bridge between Kubernetes and Fluxion, a powerful graph library that can take scheduling decisions for HPC applications.
 
 ![Single node Fluxion resource graph](ResourceGraph.png)
 Single node Fluxion resource graph
 
 
-Unlike Kubernetes, fluxion keeps track of cluster resources in a graph structure depicted by the diagram above. Kube-Flux achieves the integration between K8s and Flux by translating Kubernetes pod-specifications to Fluxion job specifications; pod resource allocations are then made by choosing a node with enough resources.
+Unlike Kubernetes, fluxion keeps track of cluster resources in a graph structure depicted by the diagram above. KubeFlux achieves the integration between Kubernetes and Flux by translating Kubernetes pod-specifications to Fluxion job specifications; pod resource allocations are then made by choosing a node with enough resources.
 
 Fluxion’s resource graph is a powerful representation of resources that aligns more with HPC’s imperative management philosophy where the state of the resources should always match the desired state, contrary to Kubernetes’s declarative management which tries to converge between the desired and actual state.
 
 ### 3.2 KubeFlux scheduler should reflect changes in the state of its own scheduled pods
 
-It also does not hold any information on its own pods once they are scheduled. We implemented an informer that carries updated cluster state information to the Kube-Flux resource graph. This helps to efficiently utilize the resources of a cluster and not let any job remain pending for long durations. 
+It also does not hold any information on its own pods once they are scheduled. We implemented an informer that carries updated cluster state information to the KubeFlux resource graph. This helps to efficiently utilize the resources of a cluster and not let any job remain pending for long durations. 
 
 ### 3.3 Synchronise the KubeFlux scheduler to reflect changes in the state of pods scheduled by other schedulers.
 
@@ -109,15 +109,15 @@ Co-scheduling Inconsistency
 ![](InformerAndKubeflux.png)
 
 
-Our first contribution to Kube-Flux is the Pod Informer, a simple and efficient solution to the problem of Kube-Flux not being aware of the status of its own pods built using the Kubernetes Controller pattern which is what kubernetes uses to make sure the state of the cluster matches the desired state. We use the tools provided by controller differently however; every time Kube-Flux schedules a new pod, the pod is added to a watch list structured using 3 event watchers/handlers:
+Our first contribution to KubeFlux is the Pod Informer, a simple and efficient solution to the problem of KubeFlux not being aware of the status of its own pods built using the Kubernetes Controller pattern which is what kubernetes uses to make sure the state of the cluster matches the desired state. We use the tools provided by controller differently however; every time KubeFlux schedules a new pod, the pod is added to a watch list structured using 3 event watchers/handlers:
 
-- Add a pod
-- Update a pod 
-- Delete a pod
+- Add a pod: KubeFlux marks the vertices representing the resources on which the pod is deployed as allocated in the graph.
+- Update a pod: KubeFlux updates the state of the vertices on which the pod is deployed in the resource graph.  
+- Delete a pod: KubeFlux updates the state of the vertices on which the pod is deployed in the resource graph. 
 
-Every time one of the aforementioned events is triggered, the informer calls the appropriate event handler which in turn, updates Kube-Flux’s internal state to reflect the updated status of its pods.
+Every time one of the aforementioned events is triggered, the informer calls the appropriate event handler which in turn, updates KubeFlux’s internal state to reflect the updated status of its pods.
 
-We designed the informer to be efficient by making incremental updates instead of recomputing the Kube-Flux state, we later highlight this in an experiment where we compare the time needed to rebuild the entire resource graph against the time it takes to update it using our informer.
+We designed the informer to be efficient by making incremental updates instead of recomputing the KubeFlux state, we later highlight this in an experiment where we compare the time needed to rebuild the entire resource graph against the time it takes to update it using our informer.
 
 ### 5.2 JGF Operator
 
