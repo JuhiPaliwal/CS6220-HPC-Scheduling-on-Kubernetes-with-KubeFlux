@@ -4,7 +4,7 @@
 
 ** **
 
-## 1.   Vision and Goals Of The Project:
+## 1. Vision and Goals Of The Project:
 
 Kubernetes provides an open source platform to deploy, scale and manage container based applications. High performance computing (HPC) and cloud technologies are increasingly coupled to accelerate the convergence of traditional HPC with new simulation, data analysis, machine-learning, and artificial intelligence approaches. While the HPC and cloud paradigm is increasingly being adopted, several key mismatches between HPC and cloud technologies still preclude this paradigm from realising its full potential.
 
@@ -100,19 +100,68 @@ This demonstrates the co-scheduling issue and emphasises the need for KubeFlux t
 
 Co-scheduling Inconsistency
 
-## 5. Acceptance criteria
+## 5. Solution Concept 
+
+
+### 5.1 Pod Informer
+
+
+![](StateInconsistencySolution.png)
+
+
+Our first contribution to Kube-Flux is the Pod Informer, a simple and efficient solution to the problem of Kube-Flux not being aware of the status of its own pods built using the Kubernetes Controller pattern which is what kubernetes uses to make sure the state of the cluster matches the desired state. We use the tools provided by controller differently however; every time Kube-Flux schedules a new pod, the pod is added to a watch list structured using 3 event watchers/handlers:
+
+- Add a pod
+- Update a pod 
+- Delete a pod
+
+Every time one of the aforementioned events is triggered, the informer calls the appropriate event handler which in turn, updates Kube-Flux’s internal state to reflect the updated status of its pods.
+
+We designed the informer to be efficient by making incremental updates instead of recomputing the Kube-Flux state, we later highlight this in an experiment where we compare the time needed to rebuild the entire resource graph against the time it takes to update it using our informer.
+
+### 5.2 JGF Operator
+
+![](StateSynchronizationSolution.png)
+JGF Operator Overview
+
+As a stretch goal for this project, we set out to enable co-scheduling between any 2 schedulers within kubernetes, our intuition is that 2 schedulers operating on the same cluster should reflect their changes to the cluster in a black-box component that acts as an informer that relays information between different schedulers. 
+In practice, if scheduler A schedules a pod on the cluster, the black-box component should hold information about the state of the pod along with how much resources are consumed by it; the information should then be accessible to other schedulers regardless of their representation of resources; we quickly realised that meeting this goal would require a powerful and complex abstraction for exchanging information between schedulers.
+
+
+The desired abstraction can be summarised as the following requirements:
+
+- The solution needs to provide a standard representation of cluster resources.
+- Schedulers wanting to make use of co-scheduling should be able to communicate with other schedulers by translating the standard representation of cluster resources and updating their own internal state however they see fit.
+
+To overcome these conceptual challenges and provide the desired level of abstraction, we brainstormed a multi-component solution that involves using an operator. The diagram above highlights the JGF operator, our abstraction for co-scheduling. 
+
+The JGF operator contains two vital components: the first is the pod controller which, similar to our pod informer, watches the pods on the cluster and records pod events. The pod controller creates custom resource definitions, or what we call Pod Info resources, which are objects that hold the resource usage information of all the pods present on the cluster. 
+
+Pod Info resources are then passed on to the second vital part of the JGF Operator, the PodInfo Controller, a customizable black-box component that provides the ability for a specific scheduler to query the changes made to the cluster state by other schedulers.
+
+While our solution covers the main conceptual challenges we cited earlier, there remains much work to be done; starting with deciding on a standard state representation that is powerful enough to satisfy the granularity requirements of a wide range of schedulers and furthermore overcoming the technical hurdles set forth by Kubernetes such how to get accurate usage metrics for a pod. With this design, we took the first steps in the long journey to enabling efficient co-scheduling in Kubernetes. 
+
+## 6. Key Design Decisions
+
+- Informer
+    - Incremental updates triggered by pod events create smaller overhead.  
+- Operator
+    - Pod information (cpu/memory usages) is stored in custom resources, allowing pod information shared by other k8s components. 
+
+## 7. Acceptance criteria
 
 - Minimum acceptance criteria:
-    - Implementing a controller for job cancellation management (for pods allocated by KubeFlux).
+    - Implement a controller for job cancellation management (for pods allocated by KubeFlux).
     - The informer component of the controller shall inform KubeFlux of state changes for its allocated pods in the cluster.
     - KubeFlux shall have an updated view of the state of its allocated pods either when said state is changed or when KubeFlux needs to make a scheduling decision.
-
+    - Test the scheduler: The scheduler will schedule a Pi calculation program, which serves as a hello world program for scientific computing. It should be able to reuse cpu resources in order to complete a batch of pods that runs a Pi calculation program. Also, the scheduler should be able to free the resources occupied by failed pods. 
 - Stretch goal:
-    - Proposing methodologies to dynamically update Fluxion's internal graph of resources to address resource sharing between Kubernetes and Fluxion (for pods allocated by other    schedulers).
-    - The system shall provide an interface for adding resource sharing polices.
+    - Propose methodologies to dynamically update Fluxion's internal graph of resources to address resource sharing between Kubernetes and Fluxion (for pods allocated by other schedulers).
+    - The system shall provide an interface for adding resource sharing policies.
 
 
-## 6.  Release Planning:
+
+## 8.  Release Planning:
 
 - Release 1
     - Learn about Kubernetes and Fluxion
@@ -155,3 +204,36 @@ Co-scheduling Inconsistency
 - Release 5
     - Demo informer in an open shift cluster (real world environment).
     - Performance analysis of the Pod Informer.
+
+## 9. Major Obstacles
+- We spent a considerable amount of time trying to understand the problem. None of our teammates are familiar with HPC scheduling and Kubernetes at the same time.
+- Kubernetes documents are not very beginner friendly. Sometimes it’s hard to find useful information.
+- The original GROMACS test is broken with recent MPIOperator commits. We spent a lot of time on debugging and it turned out we couldn't fix the problem in reasonable time.   
+- Creating kubernetes operators and CRDs in golang can be done with different code generators. Our work actually uses a combination of 2 different code generators. It took a lot of time to figure out which combination works in our project since there are a lot of tutorials based on different tools and different versions.   
+
+## 10. Deployment
+
+### 10.1 Environment
+
+- Ubuntu 20.04
+- Kind 0.11.1
+- Kubectl 1.22.2
+- Docker 20.10.9
+- Go 1.16.9
+- Helm 3.7.0
+
+### 10.2 Related Repositories
+    The first 3 repositories are forked from official repositories. All the development histories in this project can be found in those repositories.
+- [flux-k8s](https://github.com/xyloid/flux-k8s)
+- [scheduler-plugins](https://github.com/xyloid/scheduler-plugins)
+- [flex-sched](https://github.com/xyloid/flux-sched)
+- [JGFOperator](https://github.com/xyloid/JGFOperator) 
+- [Pi calculation program](https://github.com/ArangoGutierrez/Pi.git)
+
+### 10.3 flux-k8s & scheduler-plugins
+    This part is about deploying KubeFlux in a local cluster and running a Pi calculation program.  It requires following repositories and branches.
+- [flux-k8s](https://github.com/xyloid/flux-k8s) branch: `develop`
+- [scheduler-plugins](https://github.com/xyloid/scheduler-plugins) branch: `dev-kubeflux`
+ 
+    Here flux-k8s is used as a git submodule in scheduler-plugins
+
