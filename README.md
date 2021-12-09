@@ -57,7 +57,7 @@ KubeFlux to be aware of other schedulers that can alter the state of the cluster
 
 ** **
 
-## 4. Solution Concept
+## 4. Problem Description
 
 The above scope of the project is elaborated here to represent the current working of the Kubernetes and KubeFlux simultaneously.
 
