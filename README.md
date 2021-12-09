@@ -113,7 +113,7 @@ Our first contribution to KubeFlux is the Pod Informer, a simple and efficient s
 
 - Add a pod: KubeFlux marks the vertices representing the resources on which the pod is deployed as allocated in the graph.
 - Update a pod: KubeFlux updates the state of the vertices on which the pod is deployed in the resource graph.  
-- Delete a pod: KubeFlux updates the state of the vertices on which the pod is deployed in the resource graph. 
+- Delete a pod: KubeFlux cancels the pod by freeing its allocated vertices in the resource graph.
 
 Every time one of the aforementioned events is triggered, the informer calls the appropriate event handler which in turn, updates KubeFlux’s internal state to reflect the updated status of its pods.
 
